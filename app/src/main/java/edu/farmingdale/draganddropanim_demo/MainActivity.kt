@@ -12,14 +12,12 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             DragAndDropAnim_DemoTheme {
-
-                    DragAndDropBoxes()
-
-
+                DragAndDropBoxes()
             }
         }
     }
 }
+
 
 
 

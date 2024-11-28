@@ -21,24 +21,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Image
+import androidx.compose.material3.Button
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
@@ -47,28 +33,23 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-
-//private val rotation = FloatPropKey()
-
 
 @Composable
 fun DragAndDropBoxes(modifier: Modifier = Modifier) {
     var isPlaying by remember { mutableStateOf(true) }
-    Column(modifier = Modifier.fillMaxSize()) {
+    var resetPosition by remember { mutableStateOf(false) }
+    var dragBoxIndex by remember { mutableIntStateOf(0) }
 
+    Column(modifier = Modifier.fillMaxSize()) {
         Row(
             modifier = modifier
                 .fillMaxWidth()
                 .weight(0.2f)
         ) {
             val boxCount = 4
-            var dragBoxIndex by remember {
-                mutableIntStateOf(0)
-            }
 
             repeat(boxCount) { index ->
                 Box(
@@ -79,8 +60,7 @@ fun DragAndDropBoxes(modifier: Modifier = Modifier) {
                         .border(1.dp, Color.Black)
                         .dragAndDropTarget(
                             shouldStartDragAndDrop = { event ->
-                                event
-                                    .mimeTypes()
+                                event.mimeTypes()
                                     .contains(ClipDescription.MIMETYPE_TEXT_PLAIN)
                             },
                             target = remember {
@@ -100,23 +80,17 @@ fun DragAndDropBoxes(modifier: Modifier = Modifier) {
                         enter = scaleIn() + fadeIn(),
                         exit = scaleOut() + fadeOut()
                     ) {
-                        Text(
-                            text = "Right",
-                            fontSize = 40.sp,
-                            color = Color.Red,
-                            fontWeight = FontWeight.Bold,
-
+                        Image(
+                            painter = painterResource(id = R.drawable.icon),
+                            contentDescription = "Draggable Icon",
                             modifier = Modifier
-                                .fillMaxSize()
+                                .size(50.dp)
                                 .dragAndDropSource {
                                     detectTapGestures(
                                         onLongPress = { offset ->
                                             startTransfer(
                                                 transferData = DragAndDropTransferData(
-                                                    clipData = ClipData.newPlainText(
-                                                        "text",
-                                                        ""
-                                                    )
+                                                    clipData = ClipData.newPlainText("text", "")
                                                 )
                                             )
                                         }
@@ -128,39 +102,50 @@ fun DragAndDropBoxes(modifier: Modifier = Modifier) {
             }
         }
 
-
-        val pOffset by animateIntOffsetAsState(
-            targetValue = when (isPlaying) {
-                true -> IntOffset(130, 300)
-                false -> IntOffset(130, 100)
-            },
-            animationSpec = tween(3000, easing = LinearEasing)
+        val offset by animateIntOffsetAsState(
+            targetValue = if (resetPosition) IntOffset(0, 0)
+            else if (isPlaying) IntOffset(200, 400)
+            else IntOffset(400, 200),
+            animationSpec = tween(2000, easing = LinearEasing)
         )
 
-        val rtatView by animateFloatAsState(
-            targetValue = if (isPlaying) 360f else 0.0f,
-            // Configure the animation duration and easing.
+        val rotationAngle by animateFloatAsState(
+            targetValue = if (isPlaying) 360f else 0f,
             animationSpec = repeatable(
                 iterations = if (isPlaying) 10 else 1,
-                tween(durationMillis = 3000, easing = LinearEasing),
+                animation = tween(2000),
                 repeatMode = RepeatMode.Restart
             )
         )
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.8f)
-                .background(Color.Red)
+                .background(Color.Gray),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Face,
-                contentDescription = "Face",
+            Box(
                 modifier = Modifier
-                    .padding(10.dp)
-                    .offset(pOffset.x.dp, pOffset.y.dp)
-                    .rotate(rtatView)
+                    .offset(offset.x.dp, offset.y.dp)
+                    .size(100.dp, 50.dp)
+                    .background(Color.Red)
+                    .rotate(rotationAngle)
             )
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Button(onClick = {
+                resetPosition = true
+                isPlaying = false
+            }) {
+                androidx.compose.material3.Text(text = "Reset")
+            }
         }
     }
 }
-
